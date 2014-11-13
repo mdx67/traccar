@@ -96,7 +96,7 @@ public class Gps103ProtocolDecoder extends BaseProtocolDecoder {
         Integer index = 1;
 
         // Get device by IMEI
-        String imei = parser.group(index++);
+        String imei = parser.group(index++);        
         try {
             position.setDeviceId(getDataManager().getDeviceByImei(imei).getId());
         } catch(Exception error) {
@@ -104,6 +104,12 @@ public class Gps103ProtocolDecoder extends BaseProtocolDecoder {
             return null;
         }
 
+        //TESTE ENVIANDO COMANDO
+        if (channel != null) {
+            channel.write("**," + imei + ",B;");
+            Log.warning("Enviado comando:  - Device: " + imei);
+        }
+        
         // Alarm message
         extendedInfo.set("alarm", parser.group(index++));
         

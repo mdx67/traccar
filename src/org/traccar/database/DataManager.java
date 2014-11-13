@@ -63,6 +63,8 @@ public class DataManager {
     private NamedParameterStatement queryGetDevices;
     private NamedParameterStatement queryAddPosition;
     private NamedParameterStatement queryUpdateLatestPosition;
+    private NamedParameterStatement querySelectPendingCommand;
+    private NamedParameterStatement queryDeletePendingCommand;
 
     /**
      * Initialize database
@@ -111,6 +113,16 @@ public class DataManager {
         if (query != null) {
             queryUpdateLatestPosition = new NamedParameterStatement(query, dataSource);
         }
+        
+        query = properties.getProperty("database.selectPendingCommand");
+        if (query != null) {
+            querySelectPendingCommand = new NamedParameterStatement(query, dataSource);
+        }
+        
+        query = properties.getProperty("database.deletePendingCommand");
+        if (query != null) {
+            queryDeletePendingCommand = new NamedParameterStatement(query, dataSource);
+        }
     }
 
     private final NamedParameterStatement.ResultSetProcessor<Device> deviceResultSetProcessor = new NamedParameterStatement.ResultSetProcessor<Device>() {
@@ -119,6 +131,7 @@ public class DataManager {
             Device device = new Device();
             device.setId(rs.getLong("id"));
             device.setImei(rs.getString("imei"));
+            device.setPendingCommand(rs.getString("pendingCommand"));
             return device;
         }
     };
@@ -176,6 +189,23 @@ public class DataManager {
         }
     }
 
+    public String getPendingCommand(Long deviceId) throws SQLException {
+        if (querySelectPendingCommand != null) {
+            NamedParameterStatement.Params params = querySelectPendingCommand.prepare();
+            params.setLong("device_id", deviceId);
+            return params.executeQuery(deviceResultSetProcessor).get(0).getPendingCommand();
+        }
+        return null;
+    }
+    
+    public void deletePendingCommand(Long deviceId) throws SQLException {
+        if (queryDeletePendingCommand != null) {
+            NamedParameterStatement.Params params = queryDeletePendingCommand.prepare();
+            params.setLong("device_id", deviceId);
+            params.executeUpdate();
+        }
+    }    
+
     private NamedParameterStatement.Params assignVariables(NamedParameterStatement.Params params, Position position) throws SQLException {
 
         params.setLong("device_id", position.getDeviceId());
@@ -214,5 +244,5 @@ public class DataManager {
 
         return params;
     }
-
+    
 }
