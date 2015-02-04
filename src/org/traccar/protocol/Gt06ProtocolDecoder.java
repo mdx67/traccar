@@ -15,22 +15,20 @@
  */
 package org.traccar.protocol;
 
-import java.util.Calendar;
-import java.util.Properties;
-import java.util.Properties;
-import java.util.TimeZone;
-
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
-
 import org.traccar.BaseProtocolDecoder;
 import org.traccar.database.DataManager;
 import org.traccar.helper.Crc;
 import org.traccar.helper.Log;
 import org.traccar.model.ExtendedInfoFormatter;
 import org.traccar.model.Position;
+
+import java.util.Calendar;
+import java.util.Properties;
+import java.util.TimeZone;
 
 public class Gt06ProtocolDecoder extends BaseProtocolDecoder {
 
@@ -70,6 +68,7 @@ public class Gt06ProtocolDecoder extends BaseProtocolDecoder {
     private static final int MSG_STRING = 0x15;
     private static final int MSG_GPS_LBS_STATUS_1 = 0x16;
     private static final int MSG_GPS_LBS_STATUS_2 = 0x26;
+    private static final int MSG_GPS_LBS_STATUS_3 = 0x27;
     private static final int MSG_LBS_PHONE = 0x17;
     private static final int MSG_LBS_EXTEND = 0x18;
     private static final int MSG_LBS_STATUS = 0x19;
@@ -126,22 +125,21 @@ public class Gt06ProtocolDecoder extends BaseProtocolDecoder {
             
             try {
                 deviceId = getDataManager().getDeviceByImei(imei).getId();
-                buf.skipBytes(dataLength - 8);
+                buf.skipBytes(buf.readableBytes() - 6);
                 sendResponse(channel, type, buf.readUnsignedShort());
             } catch(Exception error) {
                 Log.warning("Unknown device - " + imei);
             }
             
-        }
-
-        else if (deviceId != null && (
-                 type == MSG_GPS ||
-                 type == MSG_GPS_LBS_1 ||
-                 type == MSG_GPS_LBS_2 ||
-                 type == MSG_GPS_LBS_STATUS_1 ||
-                 type == MSG_GPS_LBS_STATUS_2 ||
-                 type == MSG_GPS_PHONE ||
-                 type == MSG_GPS_LBS_EXTEND)) {
+        } else if (deviceId != null && (
+                type == MSG_GPS ||
+                type == MSG_GPS_LBS_1 ||
+                type == MSG_GPS_LBS_2 ||
+                type == MSG_GPS_LBS_STATUS_1 ||
+                type == MSG_GPS_LBS_STATUS_2 ||
+                type == MSG_GPS_LBS_STATUS_3 ||
+                type == MSG_GPS_PHONE ||
+                type == MSG_GPS_LBS_EXTEND)) {
 
             // Create new position
             Position position = new Position();
@@ -191,10 +189,10 @@ public class Gt06ProtocolDecoder extends BaseProtocolDecoder {
             buf.skipBytes(gpsLength - 12); // skip reserved
 
             if (type == MSG_GPS_LBS_1 || type == MSG_GPS_LBS_2 ||
-                type == MSG_GPS_LBS_STATUS_1 || type == MSG_GPS_LBS_STATUS_2) {
+                type == MSG_GPS_LBS_STATUS_1 || type == MSG_GPS_LBS_STATUS_2 || type == MSG_GPS_LBS_STATUS_3) {
 
                 int lbsLength = 0;
-                if (type == MSG_GPS_LBS_STATUS_1 || type == MSG_GPS_LBS_STATUS_2) {
+                if (type == MSG_GPS_LBS_STATUS_1 || type == MSG_GPS_LBS_STATUS_2 || type == MSG_GPS_LBS_STATUS_3) {
                     lbsLength = buf.readUnsignedByte();
                 }
 
@@ -206,10 +204,12 @@ public class Gt06ProtocolDecoder extends BaseProtocolDecoder {
                 buf.skipBytes(lbsLength - 9);
 
                 // Status
-                if (type == MSG_GPS_LBS_STATUS_1 || type == MSG_GPS_LBS_STATUS_2) {
+                if (type == MSG_GPS_LBS_STATUS_1 || type == MSG_GPS_LBS_STATUS_2 || type == MSG_GPS_LBS_STATUS_3) {
+
                     extendedInfo.set("alarm", true);
-                    
+
                     int flags = buf.readUnsignedByte();
+
                     extendedInfo.set("acc", (flags & 0x2) != 0);
                     // TODO parse other flags
 
