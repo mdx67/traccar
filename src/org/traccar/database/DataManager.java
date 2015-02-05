@@ -28,6 +28,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import org.traccar.helper.DriverDelegate;
 import org.traccar.helper.Log;
+import org.traccar.model.Command;
 import org.traccar.model.Device;
 import org.traccar.model.Position;
 import org.xml.sax.InputSource;
@@ -64,7 +65,7 @@ public class DataManager {
     private NamedParameterStatement queryAddPosition;
     private NamedParameterStatement queryUpdateLatestPosition;
     private NamedParameterStatement querySelectPendingCommand;
-    private NamedParameterStatement queryDeletePendingCommand;
+    private NamedParameterStatement queryUpdatePendingCommand;
 
     /**
      * Initialize database
@@ -119,9 +120,9 @@ public class DataManager {
             querySelectPendingCommand = new NamedParameterStatement(query, dataSource);
         }
         
-        query = properties.getProperty("database.deletePendingCommand");
+        query = properties.getProperty("database.updatePendingCommand");
         if (query != null) {
-            queryDeletePendingCommand = new NamedParameterStatement(query, dataSource);
+            queryUpdatePendingCommand = new NamedParameterStatement(query, dataSource);
         }
     }
 
@@ -131,7 +132,7 @@ public class DataManager {
             Device device = new Device();
             device.setId(rs.getLong("id"));
             device.setImei(rs.getString("imei"));
-            device.setPendingCommand(rs.getString("pendingCommand"));
+            //device.setPendingCommand(rs.getString("pendingCommand"));
             return device;
         }
     };
@@ -190,18 +191,29 @@ public class DataManager {
     }
 
     public String getPendingCommand(Long deviceId) throws SQLException {
+        NamedParameterStatement.ResultSetProcessor<Command> commandResultSetProcessor = new NamedParameterStatement.ResultSetProcessor<Command>() {
+            @Override
+            public Command processNextRow(ResultSet rs) throws SQLException {
+                Command command = new Command();
+                command.setId(rs.getLong("id"));
+                command.setDeviceId(rs.getLong("device_id"));
+                command.setCommand(rs.getString("command"));
+                return command;
+            }
+        };
+        
         if (querySelectPendingCommand != null) {
             NamedParameterStatement.Params params = querySelectPendingCommand.prepare();
             params.setLong("device_id", deviceId);
-            return params.executeQuery(deviceResultSetProcessor).get(0).getPendingCommand();
+            return params.executeQuery(commandResultSetProcessor).get(0).getCommand();
         }
         return null;
     }
     
-    public void deletePendingCommand(Long deviceId) throws SQLException {
-        if (queryDeletePendingCommand != null) {
-            NamedParameterStatement.Params params = queryDeletePendingCommand.prepare();
-            params.setLong("device_id", deviceId);
+    public void updatePendingCommand(Long commandId) throws SQLException {
+        if (queryUpdatePendingCommand != null) {
+            NamedParameterStatement.Params params = queryUpdatePendingCommand.prepare();
+            params.setLong("command_id", commandId);
             params.executeUpdate();
         }
     }    

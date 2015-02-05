@@ -72,16 +72,4 @@ public class Device {
         this.uniqueId = uniqueId;
     }
 
-    /**
-     * Pending Command
-     */
-    private String pendingCommand;
-
-    public String getPendingCommand() {
-        return pendingCommand;
-    }
-
-    public void setPendingCommand(String pendingCommand) {
-        this.pendingCommand = pendingCommand;
-    }
 }

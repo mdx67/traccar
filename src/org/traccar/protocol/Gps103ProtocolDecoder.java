@@ -107,7 +107,7 @@ public class Gps103ProtocolDecoder extends BaseProtocolDecoder {
         //SELECT COMANDO
         if (channel != null) {
             //channel.write("**," + imei + ",B;");
-            Log.warning("Enviado comando: " + getDataManager().getPendingCommand(position.getDeviceId()) + " - Device: " + imei);
+            //Log.warning("Enviado comando: " + getDataManager().getPendingCommand(position.getDeviceId()) + " - Device: " + imei);
         }
                 
         // Alarm message
