@@ -2,7 +2,7 @@ package org.traccar.model;
 
 /**
  * Command
- * Teste Jenkins 6
+ * Teste Jenkins 7
  * 
  * @author rguterres
  */
