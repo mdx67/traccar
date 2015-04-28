@@ -4,8 +4,7 @@
     <groupId>org.traccar</groupId>
     <artifactId>traccar</artifactId>
     <version>2.11-SNAPSHOT</version>
-
-    <name>traccar</name>
+    <name>Traccar :: traccar.org</name>
     <url>http://www.traccar.org</url>
 
     <dependencies>
